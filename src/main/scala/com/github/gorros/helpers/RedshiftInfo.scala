@@ -9,4 +9,5 @@ case class RedshiftInfo(host: String,
                         iamRole: String,
                         query: String,
                         tempDir: String,
-                        jdbcURL:String)
+                        jdbcURL:String,
+                        tempformat: String = "CSV GZIP")

@@ -39,7 +39,7 @@ object RedshiftUtils {
             .option("password", redshiftInfo.password)
             .option("dbtable", redshiftInfo.table)
             .option("tempdir", redshiftInfo.tempDir)
-            .option("tempformat", "CSV GZIP")
+            .option("tempformat", redshiftInfo.tempformat)
             .mode(SaveMode.Append)
 
         if (Boolean.getBoolean("debug")) {
