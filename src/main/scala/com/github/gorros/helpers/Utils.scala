@@ -110,4 +110,8 @@ object Utils {
         val newColumns = df.schema.fields.map(_.name).toSet
         newColumns != currentColumns
     }
+
+    def setAllColumnsNullable(df: DataFrame, nullable: Boolean) : DataFrame = {
+        df.sqlContext.createDataFrame(df.rdd, StructType(df.schema.map(_.copy(nullable = nullable))))
+    }
 }

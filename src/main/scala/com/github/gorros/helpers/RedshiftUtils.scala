@@ -6,6 +6,8 @@ import java.sql.{Connection, DriverManager}
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import org.apache.spark.sql._
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.types.MetadataBuilder
 
 object RedshiftUtils {
 
@@ -39,8 +41,15 @@ object RedshiftUtils {
             .option("password", redshiftInfo.password)
             .option("dbtable", redshiftInfo.table)
             .option("tempdir", redshiftInfo.tempDir)
-            .option("tempformat", redshiftInfo.tempformat)
-            .mode(SaveMode.Append)
+            .option("tempformat", redshiftInfo.tempFormat)
+            .option("diststyle", redshiftInfo.distStyle)
+        if(redshiftInfo.distKey.isDefined) {
+            dfWriter.option("distkey", redshiftInfo.distKey.get)
+        }
+        if (redshiftInfo.sortKey.isDefined){
+            dfWriter.option("sortkeyspec", redshiftInfo.sortKey.get)
+        }
+        dfWriter.mode(SaveMode.Append)
 
         if (Boolean.getBoolean("debug")) {
             val credentials = new DefaultAWSCredentialsProviderChain().getCredentials
@@ -78,5 +87,14 @@ object RedshiftUtils {
         DriverManager.getConnection(redshiftInfo.jdbcURL, redshiftInfo.user, redshiftInfo.password)
     }
 
+    def addEncoding(df: DataFrame, encoding: Map[String,String] = Map(), default:String = "ZSTD"): DataFrame = {
+        var newDf = df
+        df.schema.foreach(c => {
+            val name = c.name
+            val meta = new MetadataBuilder().putString("encoding",  encoding.getOrElse(name, default)).build()
+            newDf = newDf.withColumn(name, col(name).as(name, meta))
+        })
+        newDf
+    }
 }
 
