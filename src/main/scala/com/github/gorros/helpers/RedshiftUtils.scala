@@ -33,8 +33,7 @@ object RedshiftUtils {
         dfReader.load()
     }
 
-    def saveDfToRedshift(df: DataFrame, ss: SparkSession, redshiftInfo: RedshiftInfo): Unit = {
-
+    def saveDfToRedshift(df: DataFrame, ss: SparkSession, redshiftInfo: RedshiftInfo, mode: SaveMode): Unit = {
         val dfWriter = df.write.format("com.databricks.spark.redshift")
             .option("url", redshiftInfo.jdbcURL)
             .option("user", redshiftInfo.user)
@@ -43,13 +42,17 @@ object RedshiftUtils {
             .option("tempdir", redshiftInfo.tempDir)
             .option("tempformat", redshiftInfo.tempFormat)
             .option("diststyle", redshiftInfo.distStyle)
+            .option("extracopyoptions", "TRUNCATECOLUMNS")
         if(redshiftInfo.distKey.isDefined) {
             dfWriter.option("distkey", redshiftInfo.distKey.get)
         }
         if (redshiftInfo.sortKey.isDefined){
             dfWriter.option("sortkeyspec", redshiftInfo.sortKey.get)
         }
-        dfWriter.mode(SaveMode.Append)
+        if(redshiftInfo.vacuum) {
+            dfWriter.option("postactions", s"END TRANSACTION; VACUUM FULL ${redshiftInfo.table};")
+        }
+        dfWriter.mode(mode)
 
         if (Boolean.getBoolean("debug")) {
             val credentials = new DefaultAWSCredentialsProviderChain().getCredentials
@@ -61,6 +64,7 @@ object RedshiftUtils {
         }
         dfWriter.save()
     }
+
 
     def executeRedshiftSQLCheck(jdbc: String, uid: String, pwd: String, sql: String): Boolean = {
         Class.forName("com.amazon.redshift.jdbc4.Driver")

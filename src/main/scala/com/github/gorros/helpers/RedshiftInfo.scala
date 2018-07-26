@@ -14,4 +14,5 @@ case class RedshiftInfo(host: String,
                         tempFormat: String = "CSV GZIP",
                         distStyle: String = "EVEN",
                         distKey: Option[String] = None,
-                        sortKey: Option[String] = None)
+                        sortKey: Option[String] = None,
+                        vacuum: Boolean = true)
