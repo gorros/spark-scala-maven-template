@@ -92,13 +92,11 @@ object RedshiftUtils {
     }
 
     def addEncoding(df: DataFrame, encoding: Map[String,String] = Map(), default:String = "ZSTD"): DataFrame = {
-        var newDf = df
-        df.schema.foreach(c => {
-            val name = c.name
-            val meta = new MetadataBuilder().putString("encoding",  encoding.getOrElse(name, default)).build()
-            newDf = newDf.withColumn(name, col(name).as(name, meta))
+        df.columns.foldLeft(df)((tempDf, c) => {
+            val meta = new MetadataBuilder().putString("encoding",  encoding.getOrElse(c, default)).build()
+            tempDf.withColumn(c, col(c).as(c, meta))
         })
-        newDf
     }
+
 }
 

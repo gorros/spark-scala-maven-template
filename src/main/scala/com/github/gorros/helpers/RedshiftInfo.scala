@@ -15,4 +15,4 @@ case class RedshiftInfo(host: String,
                         distStyle: String = "EVEN",
                         distKey: Option[String] = None,
                         sortKey: Option[String] = None,
-                        vacuum: Boolean = true)
+                        vacuum: Boolean = false)
