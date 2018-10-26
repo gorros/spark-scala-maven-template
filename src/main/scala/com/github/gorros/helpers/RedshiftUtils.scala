@@ -2,7 +2,7 @@ package com.github.gorros.helpers
 
 
 import java.lang.Boolean
-import java.sql.{Connection, DriverManager}
+import java.sql.{Connection, DriverManager, SQLException}
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import org.apache.spark.sql._
@@ -43,15 +43,27 @@ object RedshiftUtils {
             .option("tempformat", redshiftInfo.tempFormat)
             .option("diststyle", redshiftInfo.distStyle)
             .option("extracopyoptions", "TRUNCATECOLUMNS")
+
         if(redshiftInfo.distKey.isDefined) {
             dfWriter.option("distkey", redshiftInfo.distKey.get)
         }
         if (redshiftInfo.sortKey.isDefined){
             dfWriter.option("sortkeyspec", redshiftInfo.sortKey.get)
         }
-        if(redshiftInfo.vacuum) {
-            dfWriter.option("postactions", s"END TRANSACTION; VACUUM FULL ${redshiftInfo.table};")
+        if (redshiftInfo.preActions.isDefined) {
+            dfWriter.option("preactions", redshiftInfo.preActions.get)
         }
+        val postActions = new StringBuilder()
+        if (redshiftInfo.postActions.isDefined) {
+            postActions.append(s"${redshiftInfo.postActions.get.stripSuffix(";")};")
+        }
+        if(redshiftInfo.vacuum) {
+            postActions.append(s"END TRANSACTION; VACUUM FULL ${redshiftInfo.table};")
+        }
+        if (postActions.nonEmpty){
+            dfWriter.option("postactions", postActions.toString())
+        }
+
         dfWriter.mode(mode)
 
         if (Boolean.getBoolean("debug")) {
@@ -62,7 +74,12 @@ object RedshiftUtils {
         } else {
             dfWriter.option("aws_iam_role", redshiftInfo.iamRole)
         }
-        dfWriter.save()
+        // Ignore vacuum exception
+        try{
+            dfWriter.save()
+        } catch {
+            case e: SQLException if e.getMessage.contains("VACUUM is running") =>
+        }
     }
 
 

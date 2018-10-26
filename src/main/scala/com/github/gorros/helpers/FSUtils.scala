@@ -67,5 +67,8 @@ object FSUtils {
         val fs = FileSystem.get(conf)
         fs.copyFromLocalFile(new Path(src), new Path(dest))
     }
-}
 
+    def s3distCp(src: String, dest: String): Unit = {
+        s"s3-dist-cp --src $src --dest $dest".!
+    }
+}
