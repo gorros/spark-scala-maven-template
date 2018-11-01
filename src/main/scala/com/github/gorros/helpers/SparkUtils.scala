@@ -1,8 +1,11 @@
 package com.github.gorros.helpers
 
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.mapred.{AvroInputFormat, AvroWrapper}
+import org.apache.hadoop.io.NullWritable
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Column, DataFrame, SaveMode, SparkSession}
-import org.apache.spark.sql.functions.{col,from_json}
+import org.apache.spark.sql.functions.{col, from_json}
 import org.apache.spark.sql.types.StructType
 
 object SparkUtils {
@@ -81,6 +84,14 @@ object SparkUtils {
 
         def dropTable(db: String, table: String): Unit = {
             ss.sql(s"DROP TABLE IF EXISTS $db.$table")
+        }
+
+        def avroToRDD(path: String*): RDD[AvroWrapper[GenericRecord]] = {
+            ss.sparkContext.union {
+                path.map { p =>
+                    ss.sparkContext.hadoopFile[AvroWrapper[GenericRecord], NullWritable, AvroInputFormat[GenericRecord]](p)
+                }
+            }.map(t => t._1)
         }
 
         def jsonRDDToDF(rdd: RDD[String], schema: StructType): DataFrame = {
