@@ -7,9 +7,9 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <scala.version>2.11.8</scala.version>
+        <scala.version>2.11.12</scala.version>
         <scala_maven_plugin.version>3.2.1</scala_maven_plugin.version>
-        <spark.version>2.2.1</spark.version>
+        <spark.version>2.4.0</spark.version>
         <log4j2scala.version>11.0</log4j2scala.version>
         <log4j2.version>2.8.2</log4j2.version>
     </properties>
